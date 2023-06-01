@@ -29,8 +29,7 @@ class FaceMask(VideoTransformerBase):
 
     def transform(self, frame):
         img = frame.to_ndarray(format="bgr24")
-
-        pre_trained_weights = torch.load('mask_detection_model_stdict.pt')  # Carregar pesos do modelo
+        pre_trained_weights = torch.load('mask_detection_model_stdict2.pt')  # Carregar pesos do modelo
         classificador = Classifier()
         classificador.load_state_dict(pre_trained_weights)
         classificador.eval()
@@ -47,14 +46,12 @@ class FaceMask(VideoTransformerBase):
                 # Pré-processar a ROI e converter para tensor
                 roi = roi.astype('float') / 255.0
                 roi = transforms.ToTensor()(roi).unsqueeze(0)
-
-                # Realizar a inferência utilizando o modelo PyTorch
+                # Pega a ROI pré processada e passa para o classificador
                 with torch.no_grad():
                     prediction = classificador(roi)
                     maxindex = int(torch.argmax(prediction))
                     finalout = categorias[maxindex]
                     output = str(finalout)
-
             label_position = (x, y)
             label_color = self.label_colors[output]  # Obter a cor do rótulo com base no output
             cv2.putText(img, output, label_position, cv2.FONT_HERSHEY_SIMPLEX, 1, label_color, 2)
@@ -81,17 +78,19 @@ def realtime_classification():
 
 
 def image_classification():
-    pre_trained_weights = torch.load('mask_detection_model_stdict.pt')  # Carregar pesos do modelo
+    # Carrega do modelo pré treinado
+    pre_trained_weights = torch.load('mask_detection_model_stdict2.pt')  
     classificador = Classifier()
     classificador.load_state_dict(pre_trained_weights)
     classificador.eval()
 
-    st.header("Classificação por Foto")
+    st.header("Classificação por Imagem")
     st.write("Faça o upload de uma foto e receba a classificação de máscara facial.")
 
     # Cria um campo de upload de arquivo
     uploaded_file = st.file_uploader("Selecione uma imagem", type=["jpg", "jpeg", "png"])
 
+    # Faz o pré processamento da imagem
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
         st.image(image, caption='Imagem enviada', use_column_width=True)
@@ -99,6 +98,7 @@ def image_classification():
         image_tensor = transforms.ToTensor()(image).unsqueeze(0)
 
         with torch.no_grad():
+            # Pega a imagem pré processada e passa para o classificador
             prediction = classificador(image_tensor)
             maxindex = int(torch.argmax(prediction))
             finalout = categorias[maxindex]
