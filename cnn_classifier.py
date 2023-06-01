@@ -1,15 +1,6 @@
-import torch
-from PIL import Image
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
+
+
 from torch import nn
-
-
-# Transformações a serem aplicadas nas imagens
-transformations = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor()
-])
 
 
 # Definição da arquitetura do modelo
