@@ -29,7 +29,7 @@ class FaceMask(VideoTransformerBase):
 
     def transform(self, frame):
         img = frame.to_ndarray(format="bgr24")
-        pre_trained_weights = torch.load('mask_detection_model_stdict2.pt')  # Carregar pesos do modelo
+        pre_trained_weights = torch.load('mask_detection_model_weights.pt')  # Carregar pesos do modelo
         classificador = Classifier()
         classificador.load_state_dict(pre_trained_weights)
         classificador.eval()
