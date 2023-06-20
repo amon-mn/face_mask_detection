@@ -5,15 +5,13 @@ import streamlit as st
 from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration, VideoProcessorBase, WebRtcMode
 import torch
 from torchvision import transforms
-from cnn_classifier import Classifier
+from cnn_classifier5 import Classifier5
 
 # Detecção da face
-try:
-    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-except Exception:
-    st.write("Erro ao iniciar detecção de face.")
+face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
-categorias = {0: 'incorrect_mask', 1: 'with_mask', 2: 'without_mask'}  # Dicionário com as categorias e seus índices correspondentes
+# Dicionário com as categorias e seus índices correspondentes
+categorias = {0: 'incorrect_mask', 1: 'with_mask', 2: 'without_mask'}
 
 RTC_CONFIGURATION = RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]})
 
@@ -21,42 +19,19 @@ RTC_CONFIGURATION = RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.goog
 class FaceMask(VideoTransformerBase):
     def __init__(self):
         super().__init__()
-        self.label_colors = {
-            'Com Máscara': (0, 255, 0),    # Verde
-            'Sem Máscara': (255, 0, 0),    # Vermelho
-            'Uso Incorreto': (0, 0, 255)   # Azul
-        }
 
     def transform(self, frame):
         img = frame.to_ndarray(format="bgr24")
-        pre_trained_weights = torch.load('mask_detection_model_weights.pt')  # Carregar pesos do modelo
-        classificador = Classifier()
-        classificador.load_state_dict(pre_trained_weights)
-        classificador.eval()
 
         faces = face_cascade.detectMultiScale(
             image=img, scaleFactor=1.3, minNeighbors=5)
-
+        
         for (x, y, w, h) in faces:
             cv2.rectangle(img=img, pt1=(x, y), pt2=(
                 x + w, y + h), color=(255, 0, 0), thickness=2)
-            roi = img[y:y + h, x:x + w]
-            roi = cv2.resize(roi, (224, 224), interpolation=cv2.INTER_AREA)
-            if np.sum([roi]) != 0:
-                # Pré-processar a ROI e converter para tensor
-                roi = roi.astype('float') / 255.0
-                roi = transforms.ToTensor()(roi).unsqueeze(0)
-                # Pega a ROI pré processada e passa para o classificador
-                with torch.no_grad():
-                    prediction = classificador(roi)
-                    maxindex = int(torch.argmax(prediction))
-                    finalout = categorias[maxindex]
-                    output = str(finalout)
-            label_position = (x, y)
-            label_color = self.label_colors[output]  # Obter a cor do rótulo com base no output
-            cv2.putText(img, output, label_position, cv2.FONT_HERSHEY_SIMPLEX, 1, label_color, 2)
 
         return img
+
     
 
 def home():
@@ -79,8 +54,8 @@ def realtime_classification():
 
 def image_classification():
     # Carrega do modelo pré treinado
-    pre_trained_weights = torch.load('mask_detection_model_stdict2.pt')  
-    classificador = Classifier()
+    pre_trained_weights = torch.load('mask_detection_model5_weights.pt', map_location=torch.device('cpu'))  
+    classificador = Classifier5()
     classificador.load_state_dict(pre_trained_weights)
     classificador.eval()
 
